@@ -22,10 +22,21 @@ config.validateConfig();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Configuration CORS pour Vercel
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'https://frontend-qhse.vercel.app',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
 // Middleware
-app.use(cors(config.server.cors));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Gestion des requêtes OPTIONS (preflight)
+app.options('*', cors(corsOptions));
 
 // Connexion à la base de données
 connectDB();
@@ -44,7 +55,17 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'API QHSE Trafrule ERP',
     version: '1.0.0',
-    status: 'running'
+    status: 'running',
+    cors: 'configured'
+  });
+});
+
+// Route de test CORS
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'API QHSE Test',
+    cors: 'working',
+    timestamp: new Date().toISOString()
   });
 });
 
