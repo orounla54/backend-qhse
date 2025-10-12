@@ -24,7 +24,13 @@ const EPI = require('../models/EPI');
 // Protection des routes par authentification
 router.use(auth);
 
+// Route de test simple
+router.get('/test', (req, res) => {
+  res.json({ message: 'Route qualité test OK', timestamp: new Date().toISOString() });
+});
+
 // ==================== ROUTES MATIÈRES PREMIÈRES ====================
+console.log('🔧 Configuration des routes matières premières...');
 applyCrudRoutes(router, MatierePremiere, {
   basePath: '/matieres-premieres',
   populateFields: ['createdBy', 'updatedBy', 'lots.controles.responsable', 'lots.decisionQualite.decideur'],

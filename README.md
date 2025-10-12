@@ -149,3 +149,4 @@ Ce projet est sous licence ISC - voir le fichier [LICENSE](LICENSE) pour plus de
 ## 📞 Support
 
 Pour toute question ou support, contactez l'équipe Trafrule.
+

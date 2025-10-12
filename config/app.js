@@ -6,7 +6,7 @@ const appConfig = {
     host: process.env.HOST || 'localhost',
     environment: process.env.NODE_ENV || 'development',
     cors: {
-      origin: process.env.CORS_ORIGIN || 'https://frontend-qhse.vercel.app',
+      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
       credentials: true
     }
   },

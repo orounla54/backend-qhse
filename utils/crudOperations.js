@@ -200,6 +200,15 @@ const applyCrudRoutes = (router, Model, options = {}) => {
     const [method, path] = routeKey.split(' ', 2);
     router[method.toLowerCase()](path, handler);
   });
+  
+  // Ajouter les routes personnalisées si elles existent
+  if (options.customRoutes) {
+    options.customRoutes.forEach(route => {
+      router[route.method.toLowerCase()](route.path, route.handler);
+    });
+  }
+  
+  return router;
 };
 
 module.exports = {

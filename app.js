@@ -56,12 +56,22 @@ app.use('/api/notifications', notificationRoutes);
 
 // Route de test
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'API QHSE Trafrule ERP',
-    version: '1.0.0',
-    status: 'running',
-    cors: 'configured'
-  });
+  try {
+    res.json({ 
+      message: 'API QHSE Trafrule ERP',
+      version: '1.0.0',
+      status: 'running',
+      cors: 'configured',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    console.error('Erreur route racine:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur',
+      error: error.message 
+    });
+  }
 });
 
 // Route de test CORS
