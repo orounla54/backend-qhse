@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // Configuration de la base de données
 const dbConfig = {
   // URL de connexion MongoDB
-  url: process.env.MONGODB_URI || 'mongodb+srv://orounla:kali1212@cluster0.75fgs7e.mongodb.net/',
+  url: process.env.MONGODB_URI || 'mongodb+srv://orounla:kali1212@cluster0.75fgs7e.mongodb.net/qhse_erp',
   
   // Options de connexion
   options: {
