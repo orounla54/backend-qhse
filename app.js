@@ -24,11 +24,7 @@ const PORT = process.env.PORT || 5001;
 
 // Configuration CORS pour Vercel
 const corsOptions = {
-  origin: [
-    'https://frontend-qhse.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ],
+  origin: true, // Accepter toutes les origines en production
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
