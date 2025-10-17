@@ -24,19 +24,61 @@ const PORT = process.env.PORT || 5001;
 
 // Configuration CORS pour Vercel
 const corsOptions = {
-  origin: true, // Accepter toutes les origines en production
+  origin: [
+    'https://frontend-qhse.vercel.app',
+    'https://module-qhse.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:4173'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200, // Pour les navigateurs legacy
+  preflightContinue: false
 };
 
-// Middleware
+// Middleware CORS personnalisé pour Vercel
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = corsOptions.origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Range, X-Content-Range');
+  
+  // Gérer les requêtes preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
+// Middleware CORS standard
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Gestion des requêtes OPTIONS (preflight)
-app.options('*', cors(corsOptions));
+// Gestion des requêtes OPTIONS (preflight) - fallback
+app.options('*', (req, res) => {
+  res.status(200).end();
+});
 
 // Connexion à la base de données
 connectDB();
@@ -76,6 +118,29 @@ app.get('/api/test', (req, res) => {
     message: 'API QHSE Test',
     cors: 'working',
     timestamp: new Date().toISOString()
+  });
+});
+
+// Route de déploiement pour Vercel
+app.get('/api/deploy', (req, res) => {
+  res.json({ 
+    message: 'API QHSE Déployée avec succès',
+    status: 'deployed',
+    cors: 'configured',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'production',
+    version: '1.0.0'
+  });
+});
+
+// Route de santé pour Vercel
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    environment: process.env.NODE_ENV || 'production'
   });
 });
 

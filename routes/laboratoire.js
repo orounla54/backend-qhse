@@ -291,22 +291,26 @@ router.post('/analyses/:id/valider', async (req, res) => {
 // GET /api/laboratoire/plans-controle - Obtenir tous les plans de contrôle
 router.get('/plans-controle', async (req, res) => {
   try {
+    console.log('📋 GET /plans-controle - Début');
     const { page = 1, limit = 10, statut, type, produit } = req.query;
     
     const filter = { isArchived: false };
     if (statut) filter.statut = statut;
     if (type) filter.type = type;
-    if (produit) filter['produit.nom'] = new RegExp(produit, 'i');
+    if (produit) filter['concerne.nom'] = new RegExp(produit, 'i');
+
+    console.log('📋 Filter:', JSON.stringify(filter));
 
     const plans = await PlanControle.find(filter)
       .populate('responsable', 'nom prenom')
-      .populate('approbateur', 'nom prenom')
-      .populate('analyses.analyse', 'nom type categorie')
-      .sort({ dateCreation: -1 })
+      .populate('equipe.membre', 'nom prenom')
+      .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
     const total = await PlanControle.countDocuments(filter);
+
+    console.log(`📋 Plans trouvés: ${plans.length}/${total}`);
 
     res.json({
       plans,
@@ -315,7 +319,9 @@ router.get('/plans-controle', async (req, res) => {
       total
     });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    console.error('❌ Erreur GET /plans-controle:', error.message);
+    console.error('❌ Stack:', error.stack);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message, stack: error.stack });
   }
 });
 
@@ -324,9 +330,8 @@ router.get('/plans-controle/:id', async (req, res) => {
   try {
     const plan = await PlanControle.findById(req.params.id)
       .populate('responsable', 'nom prenom')
-      .populate('approbateur', 'nom prenom')
-      .populate('analyses.analyse', 'nom type categorie methode')
-      .populate('historique.auteur', 'nom prenom');
+      .populate('equipe.membre', 'nom prenom')
+      .populate('historique.utilisateur', 'nom prenom');
 
     if (!plan) {
       return res.status(404).json({ message: 'Plan de contrôle non trouvé' });
