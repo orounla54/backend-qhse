@@ -171,7 +171,8 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error('❌ Erreur de connexion à la base de données:', error.message);
-    process.exit(1);
+    // Ne pas arrêter l'application en cas d'erreur de connexion
+    throw error;
   }
 };
 

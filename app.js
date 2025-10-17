@@ -80,8 +80,11 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-// Connexion à la base de données
-connectDB();
+// Connexion à la base de données (avec gestion d'erreur)
+connectDB().catch(err => {
+  console.error('❌ Erreur de connexion à la base de données:', err.message);
+  // Ne pas arrêter l'application, continuer sans base de données pour les tests
+});
 
 // Routes unifiées
 app.use('/api/auth', authRoutes);
