@@ -112,6 +112,106 @@ applyCrudRoutes(router, EPI, {
   ]
 });
 
+// ==================== ROUTES EPI (PLURIEL) ====================
+// Routes avec le pluriel pour compatibilité frontend
+applyCrudRoutes(router, EPI, {
+  basePath: '/epis',
+  populateFields: ['responsable', 'createdBy'],
+  customRoutes: [
+    {
+      method: 'POST',
+      path: '/epis/:id/dotation',
+      handler: async (req, res) => {
+        try {
+          const epi = await EPI.findById(req.params.id);
+          if (!epi) {
+            return res.status(404).json({ message: 'EPI non trouvé' });
+          }
+          epi.doter(
+            req.body.utilisateur,
+            req.body.quantite,
+            req.body.dateDotation,
+            req.user.id
+          );
+          await epi.save();
+          res.json(epi);
+        } catch (error) {
+          res.status(400).json({ message: 'Données invalides', error: error.message });
+        }
+      }
+    },
+    {
+      method: 'POST',
+      path: '/epis/:id/retour',
+      handler: async (req, res) => {
+        try {
+          const epi = await EPI.findById(req.params.id);
+          if (!epi) {
+            return res.status(404).json({ message: 'EPI non trouvé' });
+          }
+          epi.retourner(
+            req.body.utilisateur,
+            req.body.quantite,
+            req.body.etat,
+            req.user.id
+          );
+          await epi.save();
+          res.json(epi);
+        } catch (error) {
+          res.status(400).json({ message: 'Données invalides', error: error.message });
+        }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/epis/alertes-stock',
+      handler: async (req, res) => {
+        try {
+          const epiAvecStockFaible = await EPI.find({
+            isArchived: false,
+            'stock.quantite': { $lte: '$stock.seuilAlerte' }
+          }).populate('responsable', 'nom prenom');
+          
+          res.json(epiAvecStockFaible);
+        } catch (error) {
+          res.status(500).json({ message: 'Erreur serveur', error: error.message });
+        }
+      }
+    }
+  ]
+});
+
+// ==================== ROUTES HYGIÈNE (PLURIEL) ====================
+// Routes avec le pluriel pour compatibilité frontend
+applyCrudRoutes(router, Hygiene, {
+  basePath: '/hygienes',
+  populateFields: ['responsable', 'createdBy'],
+  customRoutes: [
+    {
+      method: 'POST',
+      path: '/hygienes/:id/resultats',
+      handler: async (req, res) => {
+        try {
+          const hygiene = await Hygiene.findById(req.params.id);
+          if (!hygiene) {
+            return res.status(404).json({ message: 'Enregistrement d\'hygiène non trouvé' });
+          }
+          hygiene.ajouterResultat(
+            req.body.critereId,
+            req.body.valeur,
+            req.body.unite,
+            req.user.id
+          );
+          await hygiene.save();
+          res.json(hygiene);
+        } catch (error) {
+          res.status(400).json({ message: 'Données invalides', error: error.message });
+        }
+      }
+    }
+  ]
+});
+
 // ==================== ROUTES PRODUITS CHIMIQUES ====================
 applyCrudRoutes(router, ProduitChimique, {
   basePath: '/produits-chimiques',
@@ -192,6 +292,54 @@ applyCrudRoutes(router, Incident, {
             req.user.id,
             req.body.commentaire || '',
             req.body.efficaciteGlobale || 'Efficace'
+          );
+          await incident.save();
+          res.json(incident);
+        } catch (error) {
+          res.status(400).json({ message: 'Données invalides', error: error.message });
+        }
+      }
+    },
+    {
+      method: 'POST',
+      path: '/incidents/:id/cloturer',
+      handler: async (req, res) => {
+        try {
+          const incident = await Incident.findById(req.params.id);
+          if (!incident) {
+            return res.status(404).json({ message: 'Incident non trouvé' });
+          }
+          incident.cloturer(req.user.id, req.body.commentaire || '');
+          await incident.save();
+          res.json(incident);
+        } catch (error) {
+          res.status(400).json({ message: 'Données invalides', error: error.message });
+        }
+      }
+    }
+  ]
+});
+
+// ==================== ROUTES INCIDENTS (PLURIEL) ====================
+// Routes avec le pluriel pour compatibilité frontend
+applyCrudRoutes(router, Incident, {
+  basePath: '/incidents',
+  populateFields: ['responsable', 'createdBy', 'actionsCorrectives.responsable', 'investigation.investigateur'],
+  customRoutes: [
+    {
+      method: 'POST',
+      path: '/incidents/:id/investiguer',
+      handler: async (req, res) => {
+        try {
+          const incident = await Incident.findById(req.params.id);
+          if (!incident) {
+            return res.status(404).json({ message: 'Incident non trouvé' });
+          }
+          incident.investiguer(
+            req.body.causes,
+            req.body.impact,
+            req.body.recommandations,
+            req.user.id
           );
           await incident.save();
           res.json(incident);

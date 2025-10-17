@@ -8,14 +8,19 @@ const optimizedConfig = {
   
   // Options de connexion optimisées
   options: {
-    maxPoolSize: config.database.options.maxPoolSize,
-    serverSelectionTimeoutMS: config.database.options.serverSelectionTimeoutMS,
-    socketTimeoutMS: config.database.options.socketTimeoutMS,
+    maxPoolSize: config.database.options.maxPoolSize || 10,
+    serverSelectionTimeoutMS: config.database.options.serverSelectionTimeoutMS || 5000,
+    socketTimeoutMS: config.database.options.socketTimeoutMS || 45000,
     // Options obsolètes supprimées : useNewUrlParser, useUnifiedTopology
     // Optimisations pour les performances
     maxIdleTimeMS: 30000,
-    serverSelectionTimeoutMS: 5000,
     heartbeatFrequencyMS: 10000,
+    // Options pour éviter les timeouts
+    bufferMaxEntries: 0,
+    bufferCommands: false,
+    // Retry logic
+    retryWrites: true,
+    retryReads: true,
   },
   
   // Configuration des collections optimisées
@@ -160,13 +165,22 @@ const optimizedConfig = {
 // Fonction de connexion optimisée
 const connectDB = async () => {
   try {
+    // Vérifier si l'URL MongoDB est configurée
+    if (!optimizedConfig.url || optimizedConfig.url === '') {
+      console.warn('⚠️ MONGODB_URI non configurée, utilisation d\'une base de données en mémoire');
+      // Utiliser une base de données en mémoire pour les tests
+      optimizedConfig.url = 'mongodb://localhost:27017/qhse_test';
+    }
+    
     const conn = await mongoose.connect(optimizedConfig.url, optimizedConfig.options);
     
     console.log(`✅ Base de données MongoDB connectée: ${conn.connection.host}`);
     console.log(`📊 Base de données: ${conn.connection.name}`);
     
-    // Créer les index optimisés
-    await createOptimizedIndexes();
+    // Créer les index optimisés (en arrière-plan)
+    createOptimizedIndexes().catch(err => {
+      console.warn('⚠️ Erreur lors de la création des index:', err.message);
+    });
     
     return conn;
   } catch (error) {
