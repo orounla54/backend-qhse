@@ -16,8 +16,8 @@ const optimizedConfig = {
     maxIdleTimeMS: 30000,
     heartbeatFrequencyMS: 10000,
     // Options pour éviter les timeouts
-    bufferMaxEntries: 0,
-    bufferCommands: false,
+    // bufferMaxEntries: 0, // Option obsolète
+    bufferCommands: true, // Permettre les commandes en buffer
     // Retry logic
     retryWrites: true,
     retryReads: true,
@@ -172,6 +172,12 @@ const connectDB = async () => {
       optimizedConfig.url = 'mongodb://localhost:27017/qhse_test';
     }
     
+    // Vérifier si déjà connecté
+    if (mongoose.connection.readyState === 1) {
+      console.log('✅ Base de données déjà connectée');
+      return mongoose.connection;
+    }
+    
     const conn = await mongoose.connect(optimizedConfig.url, optimizedConfig.options);
     
     console.log(`✅ Base de données MongoDB connectée: ${conn.connection.host}`);
@@ -186,7 +192,8 @@ const connectDB = async () => {
   } catch (error) {
     console.error('❌ Erreur de connexion à la base de données:', error.message);
     // Ne pas arrêter l'application en cas d'erreur de connexion
-    throw error;
+    console.log('🟡 Mongoose déconnecté de MongoDB');
+    return null;
   }
 };
 
