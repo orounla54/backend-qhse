@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
 // Middleware d'authentification
 const authenticateToken = (req, res, next) => {
@@ -15,8 +16,20 @@ const authenticateToken = (req, res, next) => {
   next();
 };
 
+// Middleware pour vérifier la connexion à la base de données
+const checkDatabaseConnection = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Service temporairement indisponible - Base de données non connectée',
+      code: 'DATABASE_UNAVAILABLE'
+    });
+  }
+  next();
+};
+
 // Endpoint pour récupérer les données du dashboard principal
-router.get('/dashboard', authenticateToken, async (req, res) => {
+router.get('/dashboard', authenticateToken, checkDatabaseConnection, async (req, res) => {
   try {
     // Récupérer les données depuis les différents modules
     const [laboratoireData, qualiteData, hseData] = await Promise.all([

@@ -1,13 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middlewares/auth');
+const mongoose = require('mongoose');
 const Echantillon = require('../models/Echantillon');
 const Analyse = require('../models/Analyse');
 const PlanControle = require('../models/PlanControle');
 const ResultatAnalyse = require('../models/ResultatAnalyse');
 
+// Middleware pour vérifier la connexion à la base de données
+const checkDatabaseConnection = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Service temporairement indisponible - Base de données non connectée',
+      code: 'DATABASE_UNAVAILABLE'
+    });
+  }
+  next();
+};
+
 // Protection des routes par authentification
 router.use(auth);
+router.use(checkDatabaseConnection);
 
 // ==================== ROUTES ÉCHANTILLONS ====================
 
