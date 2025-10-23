@@ -178,7 +178,19 @@ const connectDB = async () => {
       return mongoose.connection;
     }
     
-    const conn = await mongoose.connect(optimizedConfig.url, optimizedConfig.options);
+    // Configuration de connexion avec retry
+    const conn = await mongoose.connect(optimizedConfig.url, {
+      ...optimizedConfig.options,
+      // Options de retry
+      retryWrites: true,
+      retryReads: true,
+      // Timeout plus court pour Vercel
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 30000,
+      // Buffer commands pour éviter les erreurs
+      bufferCommands: false,
+      bufferMaxEntries: 0
+    });
     
     console.log(`✅ Base de données MongoDB connectée: ${conn.connection.host}`);
     console.log(`📊 Base de données: ${conn.connection.name}`);
@@ -191,8 +203,15 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error('❌ Erreur de connexion à la base de données:', error.message);
-    // Ne pas arrêter l'application en cas d'erreur de connexion
-    console.log('🟡 Mongoose déconnecté de MongoDB');
+    console.log('🟡 Tentative de reconnexion dans 5 secondes...');
+    
+    // Tentative de reconnexion après 5 secondes
+    setTimeout(() => {
+      connectDB().catch(() => {
+        console.log('🟡 Échec de la reconnexion automatique');
+      });
+    }, 5000);
+    
     return null;
   }
 };

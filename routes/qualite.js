@@ -41,6 +41,15 @@ router.get('/test', (req, res) => {
 // GET /api/qualite/matieres-premieres - Obtenir toutes les matières premières
 router.get('/matieres-premieres', async (req, res) => {
   try {
+    // Vérifier la connexion à la base de données
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Service temporairement indisponible - Base de données non connectée',
+        code: 'DATABASE_UNAVAILABLE'
+      });
+    }
+
     const { 
       page = 1, 
       limit = 10, 
@@ -95,7 +104,11 @@ router.get('/matieres-premieres', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des matières premières:', error);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur serveur', 
+      error: error.message 
+    });
   }
 });
 
@@ -121,15 +134,32 @@ router.get('/matieres-premieres/:id', async (req, res) => {
 // POST /api/qualite/matieres-premieres - Créer une nouvelle matière première
 router.post('/matieres-premieres', async (req, res) => {
   try {
+    // Vérifier la connexion à la base de données
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Service temporairement indisponible - Base de données non connectée',
+        code: 'DATABASE_UNAVAILABLE'
+      });
+    }
+
     const matierePremiere = new MatierePremiere({
       ...req.body,
       createdBy: req.user.id
     });
 
     await matierePremiere.save();
-    res.status(201).json(matierePremiere);
+    res.status(201).json({
+      success: true,
+      data: matierePremiere
+    });
   } catch (error) {
-    res.status(400).json({ message: 'Données invalides', error: error.message });
+    console.error('Erreur lors de la création de la matière première:', error);
+    res.status(400).json({ 
+      success: false,
+      message: 'Données invalides', 
+      error: error.message 
+    });
   }
 });
 

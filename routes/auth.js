@@ -373,6 +373,16 @@ router.post('/logout', auth, [
  */
 router.get('/me', auth, async (req, res) => {
   try {
+    // Vérifier la connexion à la base de données
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Service temporairement indisponible - Base de données non connectée',
+        code: 'DATABASE_UNAVAILABLE'
+      });
+    }
+
     const user = await User.findById(req.user.id);
     
     if (!user) {

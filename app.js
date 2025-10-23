@@ -83,7 +83,17 @@ app.options('*', (req, res) => {
 // Connexion à la base de données (avec gestion d'erreur)
 connectDB().catch(err => {
   console.error('❌ Erreur de connexion à la base de données:', err.message);
+  console.log('🟡 Application démarrée sans base de données - Mode dégradé');
   // Ne pas arrêter l'application, continuer sans base de données pour les tests
+});
+
+// Middleware pour vérifier la connexion à la base de données
+app.use('/api', (req, res, next) => {
+  const mongoose = require('mongoose');
+  if (mongoose.connection.readyState !== 1 && req.path !== '/health' && req.path !== '/test') {
+    console.warn('⚠️ Tentative d\'accès à l\'API sans connexion à la base de données');
+  }
+  next();
 });
 
 // Routes unifiées
@@ -138,13 +148,48 @@ app.get('/api/deploy', (req, res) => {
 
 // Route de santé pour Vercel
 app.get('/api/health', (req, res) => {
+  const mongoose = require('mongoose');
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  
   res.json({ 
     status: 'healthy',
+    database: dbStatus,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     environment: process.env.NODE_ENV || 'production'
   });
+});
+
+// Route de test de base de données
+app.get('/api/db-test', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Base de données non connectée',
+        status: mongoose.connection.readyState
+      });
+    }
+    
+    // Test simple de la base de données
+    const User = require('./models/User');
+    const userCount = await User.countDocuments();
+    
+    res.json({
+      success: true,
+      message: 'Base de données connectée',
+      userCount,
+      status: mongoose.connection.readyState
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur de test de base de données',
+      error: error.message
+    });
+  }
 });
 
 // Gestion des erreurs
